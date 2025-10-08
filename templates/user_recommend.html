@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User-Based Book Recommendations - AI Powered</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+        }
+        .recommendation-card {
+            transition: transform 0.3s ease;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: white;
+        }
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        .rating-badge {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .gnn-badge {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #6f42c1;
+            font-weight: bold;
+        }
+        .ml-badge {
+            background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+            color: #e83e8c;
+            font-weight: bold;
+        }
+        .book-cover {
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        .book-image {
+            width: 80px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .algorithm-selector {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <h1 class="text-white mb-3">🤖 AI-Powered User Recommendations</h1>
+                    <p class="text-white-50">Gợi ý sách dựa trên Graph Neural Networks (GNN) và Matrix Factorization (SVD)</p>
+                    <div class="mt-3">
+                        <a href="/" class="btn btn-outline-light me-2"><i class="fas fa-home"></i> Trang chủ</a>
+                        <a href="/recommend" class="btn btn-outline-light me-2"><i class="fas fa-search"></i> Tìm sách tương tự</a>
+                        <a href="/gnn_recommend" class="btn btn-outline-light"><i class="fas fa-brain"></i> GNN Chuyên biệt</a>
+                    </div>
+                </div>
+
+                <!-- User Input Form -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="card-title text-center mb-4">🎯 Nhập User ID để nhận gợi ý</h3>
+                        
+                        <!-- Algorithm Selection -->
+                        <div class="algorithm-selector text-white mb-4">
+                            <h5><i class="fas fa-cogs"></i> Chọn Thuật Toán:</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="algorithm" id="gnn" value="gnn" {% if algorithm == 'gnn' %}checked{% endif %}>
+                                        <label class="form-check-label" for="gnn">
+                                            <i class="fas fa-brain"></i> <strong>GNN Only</strong><br>
+                                            <small>Graph Neural Network</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="algorithm" id="ml" value="ml" {% if algorithm == 'ml' %}checked{% endif %}>
+                                        <label class="form-check-label" for="ml">
+                                            <i class="fas fa-calculator"></i> <strong>ML Only</strong><br>
+                                            <small>Matrix Factorization</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="algorithm" id="both" value="both" {% if algorithm == 'both' or not algorithm %}checked{% endif %}>
+                                        <label class="form-check-label" for="both">
+                                            <i class="fas fa-balance-scale"></i> <strong>So Sánh</strong><br>
+                                            <small>Cả hai thuật toán</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <form action="/user_recommend_books" method="POST" class="row g-3">
+                            <input type="hidden" name="algorithm" id="selected_algorithm" value="both">
+                            <div class="col-md-8">
+                                <input type="number" class="form-control form-control-lg" name="user_id" 
+                                       placeholder="Nhập User ID (ví dụ: 6492212)" required
+                                       value="{% if user_id %}{{ user_id }}{% endif %}">
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-robot"></i> Tìm gợi ý AI
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- Sample User IDs -->
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <strong>User ID mẫu:</strong> 6492212, 9056232, 12345, 67890, 98765
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>❌ Lỗi:</strong> {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <!-- User History -->
+                {% if user_history %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title">📖 Lịch sử đánh giá của User {{ user_id }}</h4>
+                        <div class="row">
+                            {% for book in user_history %}
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="d-flex align-items-center bg-light p-2 rounded">
+                                    <div class="flex-grow-1">
+                                        <strong>{{ book.title }}</strong>
+                                    </div>
+                                    <span class="badge rating-badge ms-2">⭐ {{ book.rating }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Recommendations Section -->
+                {% if user_id %}
+                
+                <!-- Status Display -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card {% if gnn_available %}bg-success{% else %}bg-secondary{% endif %} text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-brain fa-2x mb-2"></i>
+                                <h5>GNN Model</h5>
+                                <p class="mb-0">{% if gnn_available %}✅ Available{% else %}❌ Not Available{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card {% if ml_available %}bg-success{% else %}bg-secondary{% endif %} text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calculator fa-2x mb-2"></i>
+                                <h5>ML Model</h5>
+                                <p class="mb-0">{% if ml_available %}✅ Available{% else %}❌ Not Available{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations Results -->
+                <div class="row">
+                    <!-- GNN Recommendations -->
+                    {% if gnn_recommendations %}
+                    <div class="col-md-{% if ml_recommendations %}6{% else %}12{% endif %}">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">
+                                    <span class="badge gnn-badge">
+                                        <i class="fas fa-brain"></i> GNN Recommendations
+                                    </span>
+                                </h4>
+                                {% for book in gnn_recommendations %}
+                                <div class="recommendation-card">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <img src="{{ book.cover_link }}" alt="{{ book.title }}" class="book-image">
+                                        </div>
+                                        <div class="col-9">
+                                            <h5 class="mb-2">{{ book.title }}</h5>
+                                            <p class="text-muted mb-1"><i class="fas fa-user"></i> {{ book.authors }}</p>
+                                            <p class="text-muted mb-2"><i class="fas fa-tag"></i> {{ book.category }}</p>
+                                            <span class="rating-badge gnn-badge">
+                                                <i class="fas fa-robot"></i> {{ "%.2f"|format(book.predicted_rating) }}/5
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                <div class="alert alert-info mt-3">
+                                    <small><i class="fas fa-info-circle"></i> <strong>GNN:</strong> Sử dụng graph structure và relationships giữa users và books để đưa ra gợi ý đa dạng hơn.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- ML Recommendations -->
+                    {% if ml_recommendations %}
+                    <div class="col-md-{% if gnn_recommendations %}6{% else %}12{% endif %}">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">
+                                    <span class="badge ml-badge">
+                                        <i class="fas fa-calculator"></i> ML Recommendations
+                                    </span>
+                                </h4>
+                                {% for book in ml_recommendations %}
+                                <div class="recommendation-card">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <img src="{{ book.cover_link }}" alt="{{ book.title }}" class="book-image">
+                                        </div>
+                                        <div class="col-9">
+                                            <h5 class="mb-2">{{ book.title }}</h5>
+                                            <p class="text-muted mb-1"><i class="fas fa-user"></i> {{ book.author }}</p>
+                                            <span class="rating-badge ml-badge">
+                                                <i class="fas fa-chart-line"></i> {{ "%.2f"|format(book.predicted_rating) }}/5
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                <div class="alert alert-info mt-3">
+                                    <small><i class="fas fa-info-circle"></i> <strong>SVD:</strong> Matrix factorization để tìm latent factors và predict ratings chính xác.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Algorithm Comparison -->
+                {% if gnn_recommendations and ml_recommendations %}
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h4 class="card-title"><i class="fas fa-balance-scale"></i> So Sánh Thuật Toán</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="border rounded p-3">
+                                    <h5 class="text-primary"><i class="fas fa-brain"></i> Graph Neural Network</h5>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success"></i> Hiểu quan hệ phức tạp giữa users và items</li>
+                                        <li><i class="fas fa-check text-success"></i> Gợi ý đa dạng hơn</li>
+                                        <li><i class="fas fa-check text-success"></i> Xử lý cold start tốt</li>
+                                        <li><i class="fas fa-check text-success"></i> Khám phá sở thích mới</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded p-3">
+                                    <h5 class="text-success"><i class="fas fa-calculator"></i> Matrix Factorization</h5>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success"></i> Predict ratings chính xác</li>
+                                        <li><i class="fas fa-check text-success"></i> Nhanh và hiệu quả</li>
+                                        <li><i class="fas fa-check text-success"></i> Stable và reliable</li>
+                                        <li><i class="fas fa-check text-success"></i> Dựa trên patterns đã biết</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% endif %}
+
+                <!-- No Recommendations Message -->
+                {% if not gnn_recommendations and not ml_recommendations and not error and user_id %}
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4>🔍 Không tìm thấy gợi ý</h4>
+                        <p class="text-muted">Không thể tạo gợi ý cho User {{ user_id }}. 
+                        {% if not gnn_available and not ml_available %}
+                        User này không có trong cả hai hệ thống.
+                        {% else %}
+                        Vui lòng thử User ID khác hoặc chọn thuật toán khác.
+                        {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Handle algorithm selection
+        document.querySelectorAll('input[name="algorithm"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('selected_algorithm').value = this.value;
+            });
+        });
+        
+        // Set initial value
+        const checkedRadio = document.querySelector('input[name="algorithm"]:checked');
+        if (checkedRadio) {
+            document.getElementById('selected_algorithm').value = checkedRadio.value;
+        }
+        
+        // Auto-scroll to results if recommendations are present
+        {% if gnn_recommendations or ml_recommendations %}
+        setTimeout(() => {
+            document.querySelector('.row .card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 500);
+        {% endif %}
+    </script>
+</body>
+</html>

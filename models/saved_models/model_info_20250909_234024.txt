@@ -1,0 +1,48 @@
+# GNN Model Info - 2025-09-09 23:40:24
+
+## Performance
+- R² Score: 0.8362
+- RMSE: 0.5757  
+- MAE: 0.2689
+- Training Epochs: 199
+
+## Files
+- gnn_model_20250909_234024.pth: Model weights & config
+- gnn_data_20250909_234024.pth: Graph data  
+- user_to_idx_20250909_234024.pkl: User ID mapping
+- book_to_idx_20250909_234024.pkl: Book ID mapping
+- books_20250909_234024.pkl: Books DataFrame
+- comments_20250909_234024.pkl: Comments DataFrame
+
+## Stats
+- Users: 10,818
+- Books: 1,580
+- Interactions: 107,524
+- Model Parameters: 951,904
+
+## Model Architecture
+- Type: AdvancedBookRecommenderGNN
+- Embedding Dim: 128
+- Hidden Dim: 256
+- Layers: 3
+- Dropout: 0.3
+
+## Load Example
+```python
+import torch
+import pickle
+import pandas as pd
+
+# Load model
+checkpoint = torch.load('gnn_model_20250909_234024.pth')
+print(f"Model R²: {checkpoint['test_r2']:.4f}")
+
+# Load data
+with open('user_to_idx_20250909_234024.pkl', 'rb') as f:
+    user_to_idx = pickle.load(f)
+
+books = pd.read_pickle('books_20250909_234024.pkl')
+gnn_data = torch.load('gnn_data_20250909_234024.pth')
+
+print("Model loaded successfully!")
+```

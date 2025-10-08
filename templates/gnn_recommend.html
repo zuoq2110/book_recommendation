@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GNN Book Recommendations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            margin-top: 2rem;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .book-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        .book-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        .book-image {
+            width: 80px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .rating-badge {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #d63384;
+            font-weight: bold;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .gnn-badge {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #6f42c1;
+        }
+        .ml-badge {
+            background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+            color: #e83e8c;
+        }
+        .history-badge {
+            background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+            color: #0066cc;
+        }
+        .algorithm-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .comparison-section {
+            margin-top: 30px;
+        }
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-brain"></i> GNN Book Recommender
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="fas fa-home"></i> Popular Books</a>
+                <a class="nav-link" href="/recommend"><i class="fas fa-search"></i> Book Search</a>
+                <a class="nav-link" href="/user_recommend"><i class="fas fa-user"></i> ML Recommendations</a>
+                <a class="nav-link active" href="/gnn_recommend"><i class="fas fa-brain"></i> GNN Recommendations</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h2><i class="fas fa-brain"></i> Graph Neural Network Book Recommendations</h2>
+                        <p class="mb-0">Advanced AI-powered book recommendations using Graph Neural Networks</p>
+                    </div>
+                    <div class="card-body">
+                        <!-- Algorithm Info -->
+                        <div class="algorithm-info text-center">
+                            <h5><i class="fas fa-microchip"></i> GNN Algorithm</h5>
+                            <p class="mb-0">Uses Graph Attention Networks (GAT), GraphSAGE, and Graph Convolutional Networks (GCN) to analyze user-book relationships and generate personalized recommendations.</p>
+                        </div>
+
+                        <!-- Search Form -->
+                        <form method="POST" action="/gnn_recommend_books" class="mb-4">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="customer_id" class="form-label">
+                                        <i class="fas fa-user"></i> Customer ID
+                                    </label>
+                                    <select class="form-select" name="customer_id" id="customer_id" required>
+                                        <option value="">Select a customer...</option>
+                                        {% for user in users %}
+                                        <option value="{{ user }}" {% if customer_id == user %}selected{% endif %}>
+                                            Customer {{ user }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="limit" class="form-label">
+                                        <i class="fas fa-list"></i> Number of Recommendations
+                                    </label>
+                                    <select class="form-select" name="limit" id="limit">
+                                        <option value="3" {% if limit == 3 %}selected{% endif %}>3 books</option>
+                                        <option value="5" {% if limit == 5 %}selected{% endif %}>5 books</option>
+                                        <option value="10" {% if limit == 10 %}selected{% endif %}>10 books</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-filter"></i> Filter Options
+                                    </label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="exclude_rated" id="exclude_rated" {% if exclude_rated %}checked{% endif %}>
+                                        <label class="form-check-label" for="exclude_rated">
+                                            Exclude already rated books
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-brain"></i> Get GNN Recommendations
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Error Display -->
+                        {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i> {{ error }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Results -->
+                        {% if customer_id %}
+                        <div class="row">
+                            <!-- User History -->
+                            {% if user_history %}
+                            <div class="col-md-12">
+                                <h4 class="mt-4 mb-3">
+                                    <span class="badge history-badge">
+                                        <i class="fas fa-history"></i> Customer {{ customer_id }} Reading History
+                                    </span>
+                                </h4>
+                                <div class="row">
+                                    {% for book in user_history[:6] %}
+                                    <div class="col-md-4 mb-3">
+                                        <div class="book-card">
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <img src="{{ book.cover_link }}" alt="{{ book.title }}" class="book-image">
+                                                </div>
+                                                <div class="col-8">
+                                                    <h6 class="mb-1">{{ book.title[:50] }}{% if book.title|length > 50 %}...{% endif %}</h6>
+                                                    <p class="text-muted mb-1"><small>{{ book.authors }}</small></p>
+                                                    <p class="text-muted mb-1"><small><i class="fas fa-tag"></i> {{ book.category }}</small></p>
+                                                    <span class="rating-badge">
+                                                        <i class="fas fa-star"></i> {{ "%.1f"|format(book.actual_rating) }}/5
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- GNN Recommendations -->
+                            {% if gnn_recommendations %}
+                            <div class="col-md-{% if ml_recommendations %}6{% else %}12{% endif %}">
+                                <h4 class="mt-4 mb-3">
+                                    <span class="badge gnn-badge">
+                                        <i class="fas fa-brain"></i> GNN Recommendations
+                                    </span>
+                                </h4>
+                                {% for book in gnn_recommendations %}
+                                <div class="book-card">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <img src="{{ book.cover_link }}" alt="{{ book.title }}" class="book-image">
+                                        </div>
+                                        <div class="col-9">
+                                            <h5 class="mb-2">{{ book.title }}</h5>
+                                            <p class="text-muted mb-1"><i class="fas fa-user"></i> {{ book.authors }}</p>
+                                            <p class="text-muted mb-2"><i class="fas fa-tag"></i> {{ book.category }}</p>
+                                            <span class="rating-badge">
+                                                <i class="fas fa-robot"></i> Predicted: {{ "%.2f"|format(book.predicted_rating) }}/5
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- ML Recommendations Comparison -->
+                            {% if ml_recommendations %}
+                            <div class="col-md-6">
+                                <h4 class="mt-4 mb-3">
+                                    <span class="badge ml-badge">
+                                        <i class="fas fa-calculator"></i> ML (SVD) Recommendations
+                                    </span>
+                                </h4>
+                                {% for book in ml_recommendations %}
+                                <div class="book-card">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <img src="{{ book.cover_link }}" alt="{{ book.title }}" class="book-image">
+                                        </div>
+                                        <div class="col-9">
+                                            <h5 class="mb-2">{{ book.title }}</h5>
+                                            <p class="text-muted mb-1"><i class="fas fa-user"></i> {{ book.author }}</p>
+                                            <span class="rating-badge">
+                                                <i class="fas fa-chart-line"></i> Predicted: {{ "%.2f"|format(book.predicted_rating) }}/5
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Algorithm Comparison -->
+                        {% if gnn_recommendations and ml_recommendations %}
+                        <div class="comparison-section">
+                            <h4 class="mb-3"><i class="fas fa-balance-scale"></i> Algorithm Comparison</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="fas fa-brain"></i> Graph Neural Network (GNN)</h5>
+                                            <ul class="list-unstyled">
+                                                <li><i class="fas fa-check text-success"></i> Uses graph structure and relationships</li>
+                                                <li><i class="fas fa-check text-success"></i> Considers user-user and item-item similarities</li>
+                                                <li><i class="fas fa-check text-success"></i> Better for diverse recommendations</li>
+                                                <li><i class="fas fa-check text-success"></i> Handles cold start problems well</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="fas fa-calculator"></i> Matrix Factorization (SVD)</h5>
+                                            <ul class="list-unstyled">
+                                                <li><i class="fas fa-check text-success"></i> Fast and efficient predictions</li>
+                                                <li><i class="fas fa-check text-success"></i> Good for explicit feedback</li>
+                                                <li><i class="fas fa-check text-success"></i> Well-established algorithm</li>
+                                                <li><i class="fas fa-check text-success"></i> Scalable to large datasets</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-select customer ID from URL parameter if available
+        const urlParams = new URLSearchParams(window.location.search);
+        const customerId = urlParams.get('customer_id');
+        if (customerId) {
+            document.getElementById('customer_id').value = customerId;
+        }
+    </script>
+</body>
+</html>
